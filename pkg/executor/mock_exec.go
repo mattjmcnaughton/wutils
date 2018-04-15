@@ -2,6 +2,8 @@ package executor
 
 import (
 	"fmt"
+	"strings"
+	"testing"
 )
 
 // MockShellExecutor is a mock shell executor which records commands for
@@ -73,16 +75,6 @@ func (m *MockShellExecutor) RunInDirWithBoundInputOutput(dir string, name string
 	return m.executeInDir(dir, cmd)
 }
 
-// GetExecutedCommands is a public access on the `executedCommand`.
-func (m *MockShellExecutor) GetExecutedCommands() []string {
-	return m.executedCommands
-}
-
-// GetExecutedCommandDir returns the dir in which the command was executed.
-func (m *MockShellExecutor) GetExecutedCommandDir() string {
-	return m.executedCommandDir
-}
-
 func (m *MockShellExecutor) mockCommand(name string, arg ...string) error {
 	executedCommand := fmt.Sprintf("%s %v", name, arg)
 	m.executedCommands = append(m.executedCommands, executedCommand)
@@ -97,4 +89,28 @@ func (m *MockShellExecutor) mockCommand(name string, arg ...string) error {
 func (m *MockShellExecutor) executeInDir(dir string, cmd func() error) error {
 	m.executedCommandDir = dir
 	return cmd()
+}
+
+// AssertKeywordIncludedInCommand is a helper method for checking whether the
+// shell executed a given command.
+func (m *MockShellExecutor) AssertKeywordIncludedInCommand(t *testing.T, keyword string) {
+	anyMatches := false
+
+	for _, cmd := range m.executedCommands {
+		if strings.Contains(cmd, keyword) {
+			anyMatches = true
+		}
+	}
+
+	if !anyMatches {
+		t.Fatalf("%v should include the keyword %s", m.executedCommands, keyword)
+	}
+}
+
+// AssertCommandIssuedInSubdirectoryOf is a helper method for ensuring the shell
+// executed commands in a given directory.
+func (m *MockShellExecutor) AssertCommandIssuedInSubdirectoryOf(t *testing.T, parentDir string) {
+	if !strings.HasPrefix(m.executedCommandDir, parentDir) {
+		t.Fatalf("Command executed in %s, which is not a subdir of %s", m.executedCommandDir, parentDir)
+	}
 }

@@ -1,5 +1,9 @@
 package reporter
 
+import (
+	"testing"
+)
+
 // MockReporter mocks the Reporter interface
 // which writes errors to stdout.
 type MockReporter struct {
@@ -8,15 +12,24 @@ type MockReporter struct {
 
 // ReportIfError mocks outputting the string if the passed error is not nil.
 // Really it checks if it printer to screen.
-func (f *MockReporter) ReportIfError(err error, format string, a ...interface{}) {
-	f.reported = false
+func (m *MockReporter) ReportIfError(err error, format string, a ...interface{}) {
+	m.reported = false
 
 	if err != nil {
-		f.reported = true
+		m.reported = true
 	}
 }
 
-// Reported is a public accessor on the reported field.
-func (f *MockReporter) Reported() bool {
-	return f.reported
+// AssertCalled is a helper method for checking if the helper was called.
+func (m *MockReporter) AssertCalled(t *testing.T) {
+	if !m.reported {
+		t.Fatalf("Reporter should have been called")
+	}
+}
+
+// AssertNotCalled is a helper method for checking if the helper was not called.
+func (m *MockReporter) AssertNotCalled(t *testing.T) {
+	if m.reported {
+		t.Fatalf("Reporter should not have been called")
+	}
 }
